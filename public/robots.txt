@@ -1,0 +1,2 @@
+User-agent: *
+Sitemap: https://waits.dev/sitemap.xml
