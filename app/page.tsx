@@ -122,7 +122,11 @@ function Contact() {
           title="ryanwaits"
           website="GitHub"
         />
-        <ContactLink href="#" title="waits" website="CV" />
+        <ContactLink
+          href="https://read.cv/ryanwaits"
+          title="waits"
+          website="CV"
+        />
       </div>
     </div>
   );
