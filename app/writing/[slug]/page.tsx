@@ -82,7 +82,7 @@ export default async function WritingPost({ params }: { params: any }) {
         <span>{format(parseISO(post.publishedAt), 'MMMM dd, yyyy')}</span>
         <span>{post.readingTime.text}</span>
       </div>
-      <div className="relative mt-8 h-[400px]">
+      {/* <div className="relative mt-8 h-[400px]">
         <Image
           alt={post.title}
           className="rounded-lg"
@@ -90,11 +90,11 @@ export default async function WritingPost({ params }: { params: any }) {
           objectFit="cover"
           src={post.image}
         />
-      </div>
+      </div> */}
       <Mdx code={post.body.code} />
-      <ExternalLink className="text-sm" href={editUrl(post.slug)}>
+      {/* <ExternalLink className="text-sm" href={editUrl(post.slug)}>
         Edit source on GitHub
-      </ExternalLink>
+      </ExternalLink> */}
     </div>
   );
 }
