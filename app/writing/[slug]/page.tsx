@@ -1,10 +1,8 @@
 import '../../../styles/prose.css';
 import { Writing, allWritings } from '@/.contentlayer/generated';
-import ExternalLink from '@/ui/ExternalLink';
 import { Mdx } from '@/ui/MDXComponents';
 import { format, parseISO } from 'date-fns';
 import { Metadata } from 'next';
-import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
@@ -59,9 +57,6 @@ export async function generateMetadata({
   };
 }
 
-const editUrl = (slug: string) =>
-  `https://github.com/ryanwaits/waits.dev/edit/main/data/writing/${slug}.mdx`;
-
 export default async function WritingPost({ params }: { params: any }) {
   const post = allWritings.find((post) => post.slug === params.slug);
 
@@ -92,9 +87,6 @@ export default async function WritingPost({ params }: { params: any }) {
         />
       </div> */}
       <Mdx code={post.body.code} />
-      {/* <ExternalLink className="text-sm" href={editUrl(post.slug)}>
-        Edit source on GitHub
-      </ExternalLink> */}
     </div>
   );
 }
