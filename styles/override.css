@@ -1,0 +1,3 @@
+.md\:nx-prose :where(code):not(:where([class~=nx-not-prose] *)):before, .md\:nx-prose :where(code):not(:where([class~=nx-not-prose] *)):after {
+  content: '';
+}

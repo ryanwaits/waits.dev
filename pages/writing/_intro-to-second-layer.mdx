@@ -1,0 +1,67 @@
+---
+title: 'Introducing Second Layer'
+summary: 'A low-code UI library for interacting with native smart contracts on Stacks'
+publishedAt: '2023-06-03'
+image: '/static/images/intro-second-layer/proposal-view.png'
+---
+
+While awesome libraries exist like [Micro Stacks](https://micro-stacks.dev/) and [Stacks.js](https://www.hiro.so/stacks-js) for interacting directly with the Stacks blockchain, some developers work primarily on a subset of smart contracts such as BNS, pox, ExecutorDAO, and others.
+
+In this scenario, establishing a UI standard for interacting with those contracts could greatly speed up the development workflow as well as contribute to creating a more decentralized ecosystem.
+
+*Enter Second Layer...*
+
+## What is Second Layer?
+
+Second Layer is a low-code UI library for interacting with native smart contracts on Stacks.
+
+At its core, Second Layer simplifies the process of integrating and working with smart contracts on the Stacks blockchain. It eliminates the need for complex and time-consuming UI work and allows you to focus on the core functionalities of your application.
+
+One key advantage is the seamless integration with popular frameworks like Radix UI, TailwindCSS, and Micro Stacks Library.
+
+Flexibility and customization are usually where UI components fail, but we built Second Layer with two main points of emphasis:
+- Ensure compatibility with existing development ecosystems
+- Configurable enough to match any project's branding and design
+
+## How do I use Second Layer?
+
+Luckily, we've packaged the components into a library that you can easily import into your frontend projects:
+
+```bash
+npm install '@secondlayer/components'
+```
+
+### Example: Voting on a proposal
+
+There are several applications on Stacks that require some sort of voting/approval process.
+
+Typically the way this goes down is the community has to follow a long list of instructions through a forum post or some Discord channel that requires making transaction calls via the Stacks Explorer.
+
+For non-technical people (heck even technical people) this can often times be confusing and a pain.
+
+With Second Layer, developers can spin up an app with just 10 lines of code:
+
+```jsx showLineNumbers title="App.tsx"
+import { Proposal } from '@secondlayer/components'
+
+export default function App() {
+  return (
+    <Proposal.View
+    	address='SPKPXQ0X3A4D1KZ4XTP1GABJX1N36VW10D02TK9X.mega-voting'
+    	proposalId='SP2F40S465JTD7AMZ2X9SMN229617HZ9YB0HHY98A.MDP-010'
+    />
+  )
+};
+```
+
+And users can now interact with this:
+
+![proposal](/static/images/intro-second-layer/proposal-view.png)
+
+Ultimately, Second Layer aims to make your development journey smoother, faster, and more enjoyable while contributing to a more resilient ecosystem of applications on Stacks.
+
+In the next few months, we plan to roll out several more use cases such as Stacking and managing BNS.
+
+We also plan to create templates using our UI components so that non-technical community members can deploy their own applications with just a few clicks.
+
+Stay up to date with the latest info at [secondlayer.sh](https://secondlayer.sh/).

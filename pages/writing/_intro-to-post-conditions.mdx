@@ -1,0 +1,46 @@
+---
+title: Intro to Post-Conditions
+date: 2024/01/19
+description: What are post conditions and how do you use them? This guide will walk you through the basics of getting started with post conditions in Stacks transactions.
+tag: stacks, stacks.js, post conditions
+author: Ryan Waits
+---
+
+## What are Post-Conditions?
+
+In the context of a smart contract transaction, Post-Conditions are like protective clauses. They are intended to be used to force a transaction to abort **if** the transaction would cause an asset to be **sent** in a way that is not to the user's liking.
+
+Think of them as safety checks:
+
+> Unless X happens, don't proceed with the transaction.
+
+<u>Post-Conditions exist at the transaction level.</u> When a user sends a transaction, they can attach Post-Conditions to specify restrictions or requirements that must be met for the transaction to be executed successfully. These conditions are checked and validated at the end of a transaction.
+
+If they are not met, the transaction will abort and not alter any state.
+
+## Why should I use Post-Conditions?
+
+Post-Conditions are critical to assuring trust in transactions and protecting users’ assets against potential bugs or malicious activities in smart contracts.
+
+They serve as programmable barriers designed to prevent unauthorized or unintended asset transfers and should be employed whenever you conduct transactions involving smart contracts, especially when these contracts interact with your digital assets.
+
+## How do I use Post-Conditions?
+
+There are several types of Post-Conditions, each tailored to a particular asset type or specific interaction. This brief summary will cover the base types and how to use them:
+
+1.	STX Post Conditions: Involve the transfer of STX tokens and can be either standard or contract-based. Read more here.
+2.	Fungible Token Post Conditions: These handle fungible tokens (identical and interchangeable). For more details, check the fulfill guide.
+3.	NFT Post Conditions: Concern non-fungible tokens (unique). You can read more intricate details in the main guide here.
+
+### Basic Component Setup
+
+No matter the type, all post-conditions have a standard setup. Here's an example using 'STX Post Conditions':
+
+```typescript
+import {FungibleConditionCode, makeStandardSTXPostCondition} from "@stacks/transactions";
+
+const address = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM";
+const conditionCode = FungibleConditionCode.Equal;
+const amount = 42000000; // 42 STX
+const postConditions = [makeStandardSTXPostCondition(address, conditionCode, amount)];
+```

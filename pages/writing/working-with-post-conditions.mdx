@@ -1,0 +1,125 @@
+---
+title: Working with Post-Conditions
+date: 2024/01/24
+description: This guide will walk you through the process of creating and using post conditions in Stacks transactions.
+tag: stacks, stacks.js, post conditions
+author: Ryan Waits
+---
+
+import { Button } from '../../components/ui/button';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "../../components/ui/accordion";
+
+> **Note:** This guide assumes you have a basic understanding of post conditions in Stacks transactions. If you're new to post conditions, we recommend reading the [Intro to Post Conditions](./intro-to-post-conditions.mdx) before proceeding.
+
+## Overview of Post Conditions
+
+Post conditions in Stacks transactions come in various flavors, each serving a unique purpose and requiring different arguments. Here's a quick rundown:
+
+1. [**STX Post Conditions**](#stx-post-conditions): These involve the transfer of STX tokens. They can be standard or contract-based.
+2. **Fungible Token Post Conditions**: These deal with fungible tokens (identical and interchangeable), like an ERC-20 token in Ethereum.
+3. **NFT Post Conditions**: These are about non-fungible tokens (unique), similar to ERC-721 tokens in Ethereum.
+
+Remember, the devil is in the details. So, let's dive in! 
+
+## STX Post Conditions
+
+<CH.Section>
+
+To create a STX post condition, use [`makeStandardSTXPostCondition`](focus://3,10:14).
+
+The arguments are:
+
+-  [`address`](focus://6,11): this is the address of the sending principal (the address that will be sending the STX)
+-  [`conditionCode`](focus://2,7,12): this is the condition, represented by an integer, that must be met for the transaction to be valid.
+-  [`amount`](focus://8,13): the amount of STX to be sent (represented in uSTX)
+
+```typescript
+import {
+  FungibleConditionCode,
+  makeStandardSTXPostCondition,
+} from "@stacks/transactions";
+
+const address = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM";
+// link[23:43] #fungibleconditioncode
+const conditionCode = FungibleConditionCode.Equal;
+const amount = 42000000; // 42 STX
+const postConditions = [
+  makeStandardSTXPostCondition(
+    address,
+    conditionCode,
+    amount
+  ),
+];
+```
+
+</CH.Section>
+
+Once you have a Post-Condition setup, you can introduce it into your transaction by using `makeSTXTokenTransfer` or `makeContractCall`.
+
+### Use with `makeSTXTokenTransfer`
+
+You can use post conditions with `makeSTXTokenTransfer` by passing the `postConditions` array as an argument.
+
+```typescript
+import { makeSTXTokenTransfer, broadcastTransaction, AnchorMode } from '@stacks/transactions';
+
+const txOptions = {
+  recipient: 'ST2ST2H80NP5C9SPR4ENJ1Z9CDM9PKAJVPYWPQZ50',
+  ...
+  postConditions: postConditions,
+};
+
+const transaction = await makeSTXTokenTransfer(txOptions);
+const broadcastResponse = await broadcastTransaction(transaction);
+const txId = broadcastResponse.txid;
+```
+
+### Use with `makeContractCall`
+
+You can use post conditions with `makeContractCall` - when interacting with a smart contract - by passing the `postConditions` array as an argument.
+
+For this example, let's assume we have a smart contract called `vault` that has a function called `send-stx` that takes a `principal` and `uint` as an argument.
+
+```typescript
+import {
+  makeContractCall,
+  broadcastTransaction,
+  principalCV,
+  uintCV,
+  AnchorMode
+} from '@stacks/transactions';
+
+// Define the recipient's address in Clarity Value format
+const to = principalCV("ST2ST2H80NP5C9SPR4ENJ1Z9CDM9PKAJVPYWPQZ50");
+
+// Define the amount to be transferred in Clarity Value format
+const amount = uintCV(42000000);
+
+// Define the network to be used, in this case, it's the Stacks Devnet
+const network = new StacksDevnet();
+
+ const txOptions = {
+  contractAddress: 'ST2ST2H80NP5C9SPR4ENJ1Z9CDM9PKAJVPYWPQZ50'
+  contractName: 'vault',
+  functionName: 'send-stx',
+  functionArgs: [to, amount],
+  senderKey,
+  network,
+  postConditions,
+  anchorMode: AnchorMode.Any,
+};
+
+const transaction = await makeContractCall(txOptions);
+const broadcastResponse = await broadcastTransaction(transaction);
+const txId = broadcastResponse.txid;
+```
+
+## Resources
+
+- [Hiro Docs: Post Conditions](https://docs.hiro.software/build/transactions/post-conditions)
+- [SIP-005: Transaction Post-Conditions](https://github.com/stacksgov/sips/blob/main/sips/sip-005/sip-005-blocks-and-transactions.md#transaction-post-conditions)
