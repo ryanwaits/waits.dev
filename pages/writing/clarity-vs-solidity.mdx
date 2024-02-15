@@ -1,0 +1,613 @@
+---
+title: Clarity vs Solidity
+date: 2024/02/13
+description: Code examples comparing Clarity and Solidity.
+tag: stacks, clarity
+author: Ryan Waits
+---
+
+## Variable Declaration and Mutability
+
+<CH.Slideshow>
+
+In Solidity, variables are `mutable` by default and can be updated directly within functions.
+
+```solidity focus=2,5
+contract User {
+  uint public userAge = 42;
+
+  function updateAge(uint newAge) public {
+    // mark
+    userAge = newAge;
+  }
+}
+```
+
+---
+
+...unless explicitly declared as `constant`.
+
+```solidity focus=2,5 mark=2[15:22]
+contract User {
+  uint public constant USER_AGE = 42;
+
+  function updateAge(uint newAge) public {
+    // mark
+    USER_AGE = newAge; // ❌ Compilation Error
+  }
+}
+```
+
+---
+
+...or `immutable`.
+
+```solidity focus=2,5 mark=2[15:23]
+contract User {
+  uint public immutable USER_AGE = 42;
+
+  function updateAge(uint newAge) public {
+    // mark
+    USER_AGE = newAge; // ❌ Compilation Error
+  }
+}
+```
+
+---
+
+Clarity emphasizes *deliberate* state changes and requires *explicity actions* to mutate variables.
+
+```clarity focus=1,5
+(define-data-var userAge uint u42)
+
+(define-public (update-age (newAge uint))
+  (begin
+    // mark
+    (var-set userAge newAge)
+    (ok newAge)
+  )
+)
+```
+
+---
+
+Similar to Solidity, Clarity offers a `define-constant` function to declare immutable variables.
+
+```clarity focus=1,4
+(define-constant USER_AGE u42)
+
+(define-public (update-age (newAge uint))
+  (var-set USER_AGE newAge) ;; ❌ Expecting a data-var
+  (ok USER_AGE)
+)
+```
+
+---
+
+Clarity enforces a strict and explicit approach to state management compared to Solidity. In Clarity, variables that are meant to be mutable must be explicitly declared as such using `define-data-var`, and their values can only be updated using specific functions like `var-set`.
+
+```clarity focus=1,4
+(define-constant USER_AGE u42)
+
+(define-public (update-age (newAge uint))
+  USER_AGE = newAge ;; ❌ Invalid syntax
+  (ok USER_AGE)
+)
+```
+
+</CH.Slideshow>
+
+## Structs, Tuples, and Maps
+
+<CH.Slideshow>
+
+Solidity uses structs to define custom data types that can group together several variables.
+
+```solidity focus=2:5
+contract UserContract {
+  struct User {
+    string name;
+    uint age;
+  }
+
+  User public user = User("Ryan", 42);
+
+  function updateUser(string memory newName, uint newAge) public {
+    user.name = newName;
+    user.age = newAge;
+  }
+}
+```
+
+---
+
+Structs in Solidity can be mutable, and their fields can be updated after creation.
+
+```solidity focus=6:7
+contract UserContract {
+  struct User {
+    string name;
+    uint age;
+  }
+
+  // mark
+  User public user = User("Ryan", 42);
+
+  function updateUser(string memory newName, uint newAge) public {
+    user.name = newName;
+    user.age = newAge;
+  }
+}
+```
+
+---
+
+Clarity supports tuples, which are immutable collections of data that group together multiple fields.
+
+```clarity focus=1 mark=1
+(define-constant user (tuple (name "Ryan") (age 42)))
+
+(let
+  (
+    (userName (get name user))
+    (userAge (get age user))
+  )
+  (print { userName: userName, userAge: userAge } )
+)
+```
+
+---
+
+...you can also use bracket syntax to define `tuples`.
+
+```clarity focus=1 mark=1
+(define-constant user { name: "Ryan", age: 42 })
+
+(let
+  (
+    (userName (get name user))
+    (userAge (get age user))
+  )
+  (print { userName: userName, userAge: userAge } )
+)
+```
+
+---
+
+Clarity also allows for dynamic collections of data (including `tuples`) through the use of maps. Maps can store key-value pairs, where keys are unique identifiers and values are tuples. This enables the creation of dynamic, updatable collections of structured data.
+
+```clarity focus=1,4 mark=4[25:63]
+(define-map users uint (tuple (name (string-ascii 50)) (age uint)))
+
+(define-public (add-or-update-user (userId uint) (userName (string-ascii 50)) (userAge uint))
+  (map-set users userId (tuple (name userName) (age userAge)))
+  (ok true)
+)
+```
+
+---
+
+...using bracket syntax.
+
+```clarity focus=1,4 mark=4[25:56]
+(define-map users uint { name: (string-ascii 50), age: uint })
+
+(define-public (add-or-update-user (userId uint) (userName (string-ascii 50)) (userAge uint))
+  (map-set users userId { name: userName, age: userAge })
+  (ok true)
+)
+```
+
+</CH.Slideshow>
+
+## Functions, Modifiers and State Mutability
+
+<CH.Slideshow>
+
+Solidity uses function modifiers to indicate whether a function can modify the state.
+
+```solidity focus=4[27:33],8[28:32],12[32:37]
+contract UserManagement {
+  uint private age;
+
+  function incrementAge() private {
+    age += 1;
+  }
+
+  function getAge() public view returns (uint) {
+    return age;
+  }
+
+  function setAge(uint newAge) public {
+    age = newAge;
+    incrementAge();
+  }
+}
+```
+
+---
+
+The `incrementAge` function is marked as `private` and can only be called from within the contract.
+
+```solidity focus=4[27:33],14
+contract UserManagement {
+  uint private age;
+
+  function incrementAge() private {
+    age += 1;
+  }
+
+  function getAge() public view returns (uint) {
+    return age;
+  }
+
+  function setAge(uint newAge) public {
+    age = newAge;
+    incrementAge();
+  }
+}
+```
+
+---
+
+Clarity does not have modifiers in the same way Solidity does. Instead, state mutability is determined by the built-in functions used.
+
+```clarity focus=3[2:15],7[2:17],11[2:15]
+(define-data-var userAge uint u0)
+
+(define-private (increment-age)
+  (var-set userAge (+ (var-get userAge) u1))
+)
+
+(define-read-only (get-user-age)
+  (var-get userAge)
+)
+
+(define-public (set-user-age (newAge uint))
+  (var-set userAge newAge)
+  (ok newAge)
+)
+```
+
+---
+
+`define-private` functions are used to define private functions that can only be called from within the contract.
+
+```clarity focus=3:5
+(define-data-var userAge uint u0)
+
+(define-private (increment-age)
+  (var-set userAge (+ (var-get userAge) u1))
+)
+
+(define-read-only (get-user-age)
+  (var-get userAge)
+)
+
+(define-public (set-user-age (newAge uint))
+  (var-set userAge newAge)
+  (ok newAge)
+)
+```
+
+---
+
+`define-read-only` functions are used to define functions that can only read from the contract's state.
+
+```clarity focus=7:9
+(define-data-var userAge uint u0)
+
+(define-private (increment-age)
+  (var-set userAge (+ (var-get userAge) u1))
+)
+
+(define-read-only (get-user-age)
+  (var-get userAge)
+)
+
+(define-public (set-user-age (newAge uint))
+  (var-set userAge newAge)
+  (ok newAge)
+)
+```
+
+---
+
+`define-public` functions are used to define functions that can be called from outside the contract.
+
+```clarity focus=11:14
+(define-data-var userAge uint u0)
+
+(define-private (increment-age)
+  (var-set userAge (+ (var-get userAge) u1))
+)
+
+(define-read-only (get-user-age)
+  (var-get userAge)
+)
+
+(define-public (set-user-age (newAge uint))
+  (var-set userAge newAge)
+  (ok newAge)
+)
+```
+
+</CH.Slideshow>
+
+## Calling functions
+
+<CH.Slideshow>
+
+In Solidity, functions can be called internally within the contract or `externally` by other contracts and transactions.
+
+```solidity focus=1:7,12
+contract UserManagement {
+  uint public age;
+
+  function setAge(uint newAge) public {
+    age = newAge;
+  }
+}
+
+contract Caller {
+  function callSetAge(address userManagementAddress, uint newAge) public {
+    UserManagement userManagement = UserManagement(userManagementAddress);
+    // mark
+    userManagement.setAge(newAge);
+  }
+}
+```
+
+---
+
+In Clarity, functions can be called internally within the contract or `externally` by other contracts and transactions.
+
+```clarity focus=1:7,12
+(define-data-var age uint u20)
+
+(define-private (increment-age)
+  (var-set age (+ (var-get age) u1))
+)
+
+(define-public (update-age)
+  (increment-age) ;; Internal call
+  (ok (var-get age))
+)
+```
+
+---
+
+...you can also use the `contract-call` function to call functions from other contracts.
+
+```clarity focus=1:7,12
+(define-data-var age uint u20)
+
+(define-private (increment-age)
+  (var-set age (+ (var-get age) u1))
+)
+
+(define-public (update-age)
+  (increment-age) ;; Internal call
+  (ok (var-get age))
+)
+
+(define-public (call-set-age (contractA principal) (newAge uint))
+  (contract-call? contractA set-age newAge)
+)
+```
+
+</CH.Slideshow>
+
+## Events and Logs
+
+<CH.Slideshow>
+
+In Solidity, events are declared using the `event` keyword. You can then `emit` your event inside a function to log it.
+
+```solidity focus=2,5
+contract UserManagement {
+  event UserUpdated(string name, uint age);
+
+  function updateUser(string memory _name, uint _age) public {
+    emit UserUpdated(_name, _age);
+  }
+}
+```
+
+---
+
+Clarity does not have events in the same way Solidity does. Instead, it uses a logging mechanism through the print function, which outputs information that can be indexed and accessed by external observers.
+
+```clarity focus=2
+(define-public (update-user (name (string-ascii 32)) (age uint))
+  (print { action: "User updated", name: name, age: age })
+  (ok true)
+)
+```
+
+---
+
+...some native, built-in functions also emit events automatically.
+
+```clarity focus=2
+(define-public (update-user (name (string-ascii 32)) (age uint))
+  // mark
+  (stx-transfer? amount tx-sender recipient)
+  (ok true)
+)
+```
+
+</CH.Slideshow>
+
+## Access Control
+
+<CH.Slideshow>
+
+Solidity allows for the creation of custom modifiers to control access to functions. The `onlyOwner` modifier is a common pattern used to restrict function execution to the contract's owner.
+
+```solidity focus=7:11,13[49:59],14
+contract Owned {
+  address public owner;
+
+  constructor() {
+    owner = msg.sender;
+  }
+
+  modifier onlyOwner() {
+    require(msg.sender == owner, "Not the owner");
+    _;
+  }
+
+  function changeOwner(address newOwner) public onlyOwner {
+    owner = newOwner;
+  }
+}
+```
+
+---
+
+...you can also just use `require` statements directly to control access to functions.
+
+```solidity focus=9
+contract Owned {
+  address public owner;
+
+  constructor() {
+    owner = msg.sender;
+  }
+
+  function changeOwner(address newOwner) public {
+    // mark
+    require(msg.sender == owner, "Not the owner");
+    owner = newOwner;
+  }
+}
+```
+
+---
+
+Clarity does not have modifiers in the same way Solidity does. Instead, access control can be implemented through explicit checks within functions.
+
+```clarity focus=5
+(define-data-var owner principal tx-sender)
+
+(define-public (change-owner (newOwner principal))
+  (begin
+    // mark
+    (asserts! (is-eq tx-sender (var-get owner)) (err u1))
+    (var-set owner newOwner)
+    (ok true)
+  )
+)
+```
+
+</CH.Slideshow>
+
+## Practical Examples
+
+### Transferring Native Tokens
+
+<CH.Slideshow>
+
+To send ETH, you would typically use the `transfer` or `send` method from an address.
+
+```solidity focus=3
+contract SendETH {
+  function sendViaTransfer(address payable _to) public payable {
+    // mark
+    _to.transfer(msg.value);
+  }
+}
+```
+
+---
+
+Notice that the `sendViaTransfer` function is marked as `payable` to allow it to send and receive ETH. The `_to` address is also marked as `payable` to allow it to receive ETH.
+
+```solidity focus=2[36:42,56:63]
+contract SendETH {
+  function sendViaTransfer(address payable _to) public payable {
+    // mark
+    _to.transfer(msg.value);
+  }
+}
+```
+
+---
+
+In Clarity, sending STX involves calling the built-in function `stx-transfer`. The function inherently checks if the transaction sender has enough STX and if the transfer is possible, making the code straightforward.
+
+```clarity focus=2
+(define-public (send-stx (recipient principal) (amount uint))
+  // mark
+  (stx-transfer? amount tx-sender recipient)
+)
+```
+
+</CH.Slideshow>
+
+### Transferring Fungible Tokens
+
+<CH.Slideshow>
+
+Transferring an ERC20 token in Solidity involves calling the transfer function of the token's contract:
+
+```solidity focus=8
+interface IERC20 {
+  function transfer(address _to, uint256 _amount) external returns (bool);
+}
+
+contract SendERC20 {
+  function transferToken(address _tokenContract, address _to, uint256 _amount) public {
+    IERC20 tokenContract = IERC20(_tokenContract);
+    // mark
+    tokenContract.transfer(_to, _amount);
+  }
+}
+```
+
+---
+
+In Clarity, transferring a SIP-010 standard fungible token can be done by calling the transfer function defined in the token's contract:
+
+```clarity focus=2
+(define-public (transfer-token (recipient principal) (amount uint))
+  // mark
+  (contract-call? .token transfer amount tx-sender recipient)
+)
+```
+
+</CH.Slideshow>
+
+### Transferring Non-Fungible Tokens
+
+<CH.Slideshow>
+
+Transferring an ERC721 token (NFT) in Solidity is done using the transferFrom function:
+
+```solidity focus=8
+interface IERC721 {
+  function transferFrom(address _from, address _to, uint256 _tokenId) external;
+}
+
+contract SendERC721 {
+  function transferNFT(address _nftContract, address _to, uint256 _tokenId) public {
+    IERC721 nftContract = IERC721(_nftContract);
+    // mark
+    nftContract.transferFrom(msg.sender, _to, _tokenId);
+  }
+}
+```
+
+---
+
+Transferring a SIP-009 standard NFT in Clarity involves calling the transfer function of the NFT's contract:
+
+```clarity
+(define-public (transfer-nft (nft-contract principal) (token-id uint) (recipient principal))
+  // mark
+  (contract-call? nft-contract transfer token-id tx-sender recipient)
+)
+```
+
+</CH.Slideshow>

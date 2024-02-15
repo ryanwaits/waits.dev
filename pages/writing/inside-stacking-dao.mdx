@@ -1,0 +1,85 @@
+---
+title: Inside StackingDAO
+date: 2024/02/15
+description: Exploring the contract code for StackingDAO
+tag: stacks, clarity
+author: Ryan Waits
+---
+
+*Note: This article is a work in progress and will be updated with more details on the StackingDAO contract operations and functionalities.*
+
+## Deposit Function in StackingDAO Contract
+
+The deposit function allows users to deposit STX in exchange for stSTX tokens. Here's a detailed look at its operations:
+
+<CH.Slideshow>
+
+**Determine Current Cycle**
+
+Fetches the current PoX cycle and retrieves its information.
+
+```clarity focus=4:6
+(define-public (deposit (reserve-contract <reserve-trait>) (stx-amount uint) (referrer (optional principal)))
+  (let
+    (
+      (cycle-id (get-pox-cycle))
+      (current-cycle-info (get-cycle-info cycle-id))
+
+      (stx-ststx (try! (get-stx-per-ststx reserve-contract)))
+      (ststx-to-receive (/ (* stx-amount u1000000) stx-ststx))
+    )
+    (try! (contract-call? .dao check-is-enabled))
+    (asserts! (not (get-shutdown-deposits)) (err ERR_SHUTDOWN))
+
+    (map-set cycle-info { cycle-id: cycle-id } (merge current-cycle-info { deposited: (+ (get deposited current-cycle-info) stx-amount) }))
+    (print { action: "deposit", data: { stacker: tx-sender, referrer: referrer, amount: ststx-to-receive, block-height: block-height } })
+
+    (try! (stx-transfer? stx-amount tx-sender (contract-of reserve-contract)))
+    (try! (contract-call? .ststx-token mint-for-protocol ststx-to-receive tx-sender))
+
+    (ok ststx-to-receive)
+  )
+)
+```
+
+---
+
+**Calculate stSTX to Receive**
+
+Calculates the amount of stSTX tokens the user will receive based on the current conversion rate.
+
+```clarity focus=7:8
+  
+```
+
+---
+
+**Check Contract State**
+
+Ensures the DAO is enabled and deposits are not shut down.
+
+```clarity focus=9:11
+  
+```
+
+---
+
+**Update Cycle Information**
+
+Updates the cycle's deposited amount to include the new deposit and log the deposit details.
+
+```clarity focus=12:14
+  
+```
+
+---
+
+**Transfer STX and Mint stSTX**
+
+Transfers the STX to the reserve contract and mints stSTX for the user.
+
+```clarity focus=16:17
+  
+```
+
+</CH.Slideshow>
